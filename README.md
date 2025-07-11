@@ -8,61 +8,29 @@ built using Flask (Python) for the backend and a PostgreSQL database for structu
 relational data storage. This project demonstrates how a scalable, user-friendly digital archive can enhance 
 access to academic resources while also showcasing the practical use of relational 
 databases and web technologies in solving real-world academic problems.
-PYTHON CODE FOR FUNCTIONAL DESIGN ( DB CONNECTIVITY) 
-Reusable Database Connectivity Function: 
-def get_db_connection(): 
-    ... 
-    conn = psycopg2.connect( 
-        host=os.getenv("DB_HOST"), 
-        database=os.getenv("DB_NAME"), 
-        user=os.getenv("DB_USER"), 
-        password=os.getenv("DB_PASSWORD") 
-    ) 
-    return conn 
- 
- 
-PL/SQL Function Call: 
-CREATE OR REPLACE FUNCTION update_download_count() 
-RETURNS TRIGGER AS $$ 
-BEGIN 
-    UPDATE papers 
-    SET download_count = download_count + 1 
-    WHERE id = NEW.paper_id; 
- 
-    RETURN NEW; 
-END; 
-$$ LANGUAGE plpgsql; 
- 
- 
-CREATE TRIGGER trigger_update_downloads 
-AFTER INSERT ON downloads 
-FOR EACH ROW 
-EXECUTE FUNCTION update_download_count(); 
-Trigger is used via this line: 
-cur.execute("INSERT INTO downloads (username, paper_id) VALUES (%s, %s)", ...) 
-Data Access: 
-Upload, Delete, Retrieve, Filter — all examples of structured access 
-Upload: Allows faculty to upload a paper, select department, semester, course and upload PDF 
-file. This saves the PDF as binary data to the papers table. Then it displays uploaded papers 
-below the form: 
-cur.execute("""INSERT INTO papers (title, department_id, course_id, semester, uploaded_by, 
-pdf) VALUES (%s, %s, %s, %s, %s, %s)""", (...)) 
-Delete(Functionality for faculty to delete papers): 
-cur.execute("DELETE FROM papers WHERE id = %s AND uploaded_by = %s", ...) 
-Filter: used on papers table to access the paper after sorting through the department, semester and 
-course:  
-cur.execute(""" 
-SELECT p.id, p.title, c.name, p.semester, p.upload_date 
-FROM papers p 
-JOIN course c ON p.course_id = c.id 
-WHERE c.department_id = %s AND p.semester = %s AND c.id = %s 
-ORDER BY p.upload_date DESC 
-""", (...)) 
-In case the semester selected is a semester of the first year( semester 1 or semester 2) then all the 
-first year courses are available to choose from to view the papers:  
-if semester in ["Semester 1", "Semester 2"]: 
-cur.execute("SELECT id, name FROM course WHERE semester = %s AND department_id IS 
-NULL ORDER BY name", (semester,)) 
-else: 
-cur.execute("SELECT id, name FROM course WHERE department_id = %s AND semester = 
-%s ORDER BY name", ...)
+The key focus of the system is its robust database design and SQL-driven features. The 
+project uses PostgreSQL as the relational database, with a schema that includes users, 
+departments, courses, papers, and download logs — each with clear relationships and referential 
+integrity. Key problems addressed include: 
+● Creating a normalized relational schema with proper foreign keys for structured data 
+access across departments, semesters, and course-specific papers. 
+● Implementing secure role-based login that restricts upload privileges to faculty while 
+allowing students to access and download documents. 
+● Handling dynamic filtering of papers by department, semester, and course using 
+multi-table JOINs and conditional logic (e.g., common courses for semesters 1 and 2). 
+● Storing uploaded PDFs as binary data (BYTEA) within the database and serving them 
+securely for download. 
+SQL-centric Functionalities: 
+1. Popular Downloads Tracking: 
+A downloads table tracks all student download actions. This table is populated using a 
+trigger linked to a PostgreSQL function, automatically inserting a log entry whenever 
+a paper is downloaded. This allows the system to dynamically compute most 
+downloaded papers using SQL aggregation. 
+2. Leaderboard (Most Active Students): 
+A stored function is used to return the top 10 students ranked by number of downloads 
+using GROUP BY, ORDER BY, and LIMIT. 
+3. Complex Query Usage: 
+The project implements: 
+○ WITH clauses for building temporary views like popular downloads. 
+○ GROUP BY and HAVING for conditional aggregation (e.g., uploads by 
+course/semester).
