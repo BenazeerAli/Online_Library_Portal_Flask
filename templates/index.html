@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student List</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>Students</h1>
+    <ul>
+        {% for row in data %}
+            <li>{{ row[1] }} (ID: {{ row[0] }})</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
